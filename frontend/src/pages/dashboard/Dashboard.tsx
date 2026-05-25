@@ -12,7 +12,6 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import {
   AreaChart,
   Area,
-  LineChart,
   Line,
   BarChart,
   Bar,
@@ -93,33 +92,31 @@ const FinancialDonutChart: React.FC<{
   return (
     <div className="flex items-center gap-6 flex-wrap" dir="rtl">
       <div className="relative flex-shrink-0" style={{ width: 180, height: 180 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={segments}
-              cx="50%"
-              cy="50%"
-              innerRadius={55}
-              outerRadius={82}
-              dataKey="value"
-              paddingAngle={2}
-              onMouseEnter={(_, i) => setActiveIndex(i)}
-              onMouseLeave={() => setActiveIndex(null)}
-              isAnimationActive
-              animationDuration={900}
-              animationEasing="ease-in-out"
-            >
-              {segments.map((seg, i) => (
-                <Cell
-                  key={seg.name}
-                  fill={seg.color}
-                  opacity={activeIndex === null || activeIndex === i ? 1 : 0.4}
-                  stroke="transparent"
-                />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
+        <PieChart width={180} height={180}>
+          <Pie
+            data={segments}
+            cx={90}
+            cy={90}
+            innerRadius={55}
+            outerRadius={82}
+            dataKey="value"
+            paddingAngle={2}
+            onMouseEnter={(_, i) => setActiveIndex(i)}
+            onMouseLeave={() => setActiveIndex(null)}
+            isAnimationActive
+            animationDuration={900}
+            animationEasing="ease-in-out"
+          >
+            {segments.map((seg, i) => (
+              <Cell
+                key={seg.name}
+                fill={seg.color}
+                opacity={activeIndex === null || activeIndex === i ? 1 : 0.4}
+                stroke="transparent"
+              />
+            ))}
+          </Pie>
+        </PieChart>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
           {active ? (
@@ -380,6 +377,8 @@ export default function Dashboard() {
       sales: Number(p.sales) || 0,
     }))
   }, [yearData?.chart_data, forceEmpty])
+
+  const salesYearHasValues = salesYearSeries.some((p) => p.sales > 0)
 
   const topSellingItems = useMemo(() => {
     const rows = forceEmpty ? [] : (yearData?.top_selling_items ?? [])
@@ -696,13 +695,13 @@ export default function Dashboard() {
                 <TrendingUp size={22} />
                 {lang === 'ar' ? 'منحنى أداء المبيعات الشهري' : 'Monthly Sales Performance'}
               </h2>
-              <div className="h-64">
-                {salesYearSeries.length === 0 ? (
+              <div className="h-64 w-full min-h-[256px]">
+                {salesYearSeries.length === 0 || !salesYearHasValues ? (
                   <div className="flex h-full items-center justify-center text-sm text-slate-500 dark:text-slate-400">
                     {lang === 'ar' ? 'لا توجد بيانات للعرض' : 'No data to display'}
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height="100%" minWidth={260} minHeight={200}>
+                  <ResponsiveContainer width="100%" height={256}>
                     <AreaChart data={salesYearSeries} margin={{ left: 6, right: 10, top: 8, bottom: 4 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                       <XAxis
@@ -771,8 +770,8 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    <div className="flex-1 min-w-0 h-full">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={260} minHeight={200}>
+                    <div className="flex-1 min-w-0 h-full min-h-[320px]">
+                      <ResponsiveContainer width="100%" height={320}>
                         <BarChart
                           data={topSellingItems}
                           layout="vertical"
