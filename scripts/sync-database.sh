@@ -60,10 +60,17 @@ mysqldump_cmd --single-transaction --routines --triggers "$DB_NAME" > "$BACKUP_B
 echo "تم: $BACKUP_BEFORE"
 
 echo "جاري استيراد البيانات الجديدة..."
-mysql_cmd "$DB_NAME" < /tmp/db_backup.sql
+if ! mysql_cmd "$DB_NAME" < /tmp/db_backup.sql; then
+  echo "[خطأ] فشل استيراد MySQL. راجع /tmp/db_backup.sql"
+  php artisan up 2>/dev/null || true
+  exit 1
+fi
 echo "تم الاستيراد."
 
-echo "جاري تشغيل migrations..."
+echo "تحقق سريع من البيانات..."
+mysql_cmd "$DB_NAME" -e "SELECT slug, (SELECT COUNT(*) FROM customers c WHERE c.tenant_id=t.id) AS customers, (SELECT COUNT(*) FROM invoices i WHERE i.tenant_id=t.id) AS invoices FROM tenants t;"
+
+echo "جاري تشغيل migrations (إن وُجدت جديدة)..."
 php artisan migrate --force
 
 echo "مسح الكاش..."
