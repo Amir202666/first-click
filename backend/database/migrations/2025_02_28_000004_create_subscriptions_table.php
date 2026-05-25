@@ -12,9 +12,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('subscription_plan_id')->constrained()->cascadeOnDelete();
-            $table->timestamp('starts_at');
-            $table->timestamp('ends_at');
-            $table->timestamp('cancelled_at')->nullable();
+            $table->dateTime('starts_at');
+            $table->dateTime('ends_at');
+            $table->dateTime('cancelled_at')->nullable();
             $table->boolean('auto_renew')->default(true);
             $table->string('status')->default('active'); // active, expired, cancelled, suspended
             $table->decimal('amount_paid', 12, 2)->default(0);

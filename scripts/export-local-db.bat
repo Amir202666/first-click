@@ -64,6 +64,7 @@ REM البحث عن mysqldump (Laragon / XAMPP / PATH)
 set "MYSQLDUMP="
 if exist "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqldump.exe" set "MYSQLDUMP=C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqldump.exe"
 if "%MYSQLDUMP%"=="" if exist "C:\laragon\bin\mysql\mysql-8.0.30-winx64\bin\mysqldump.exe" set "MYSQLDUMP=C:\laragon\bin\mysql\mysql-8.0.30-winx64\bin\mysqldump.exe"
+if "%MYSQLDUMP%"=="" if exist "C:\xampp\mysql\bin\mysqldump.exe" set "MYSQLDUMP=C:\xampp\mysql\bin\mysqldump.exe"
 if "%MYSQLDUMP%"=="" (
     for /f "delims=" %%p in ('where mysqldump 2^>nul') do set "MYSQLDUMP=%%p"
 )
