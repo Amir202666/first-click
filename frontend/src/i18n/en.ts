@@ -59,7 +59,7 @@ const en: Translations = {
   login: 'Login',
   loginCompanyName: 'Company ID',
   loginUsername: 'Username',
-  loginDemoHint: 'Demo: Company ID = first-company, Username = admin@firstclick.com, Password = password123',
+  loginDemoHint: 'Owner: Company ID = firstclick-erp, Username = firstclick-erp, Password = FirstClickERP',
   logout: 'Logout',
   email: 'Email',
   password: 'Password',

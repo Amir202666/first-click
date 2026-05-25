@@ -150,7 +150,7 @@ export default function Login() {
               </button>
               <p className="pt-1 text-center text-[11px] leading-relaxed text-slate-500">
                 {t.loginDemoHint ??
-                  'تجريبي: المعرف = first-company، المستخدم = admin@firstclick.com، كلمة المرور = password123'}
+                  'المالك: المعرف = firstclick-erp، المستخدم = firstclick-erp، كلمة المرور = FirstClickERP'}
               </p>
             </form>
           </div>

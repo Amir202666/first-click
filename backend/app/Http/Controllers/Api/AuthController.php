@@ -66,12 +66,18 @@ class AuthController extends Controller
             ]);
         }
 
-        $tenantUser = $user->tenants()->where('tenants.id', $tenant->id)->first();
-        if (! $tenantUser || ! $tenantUser->pivot->is_active) {
-            $this->auditLog->log('login_failed', 'sessions', null, null, ['company' => $companyInput, 'username' => $usernameInput], $tenant->id, $user->id);
-            $this->registerLoginFailure($attemptKey, $lockKey, $maxAttempts, $windowSeconds, $lockSeconds);
+        if (! $user->isSuperAdmin()) {
+            $tenantUser = $user->tenants()->where('tenants.id', $tenant->id)->first();
+            if (! $tenantUser || ! $tenantUser->pivot->is_active) {
+                $this->auditLog->log('login_failed', 'sessions', null, null, ['company' => $companyInput, 'username' => $usernameInput], $tenant->id, $user->id);
+                $this->registerLoginFailure($attemptKey, $lockKey, $maxAttempts, $windowSeconds, $lockSeconds);
+                throw ValidationException::withMessages([
+                    'company' => ['ليس لديك صلاحية الدخول لهذه الشركة.'],
+                ]);
+            }
+        } elseif (! $user->tenants()->where('tenants.id', $tenant->id)->exists()) {
             throw ValidationException::withMessages([
-                'company' => ['ليس لديك صلاحية الدخول لهذه الشركة.'],
+                'company' => ['حساب المالك غير مربوط بهذه الشركة. شغّل: php artisan db:seed --class=OwnerSeeder'],
             ]);
         }
 
