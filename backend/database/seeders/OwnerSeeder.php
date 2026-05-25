@@ -75,7 +75,8 @@ class OwnerSeeder extends Seeder
                 [
                     'subscription_plan_id' => $plan->id,
                     'starts_at' => now(),
-                    'ends_at' => now()->create(2099, 12, 31, 23, 59, 59),
+                    // MySQL TIMESTAMP max ≈ 2038-01-19
+                    'ends_at' => now()->create(2038, 1, 1, 0, 0, 0),
                     'auto_renew' => true,
                     'amount_paid' => 0,
                     'currency' => 'SAR',
@@ -88,6 +89,6 @@ class OwnerSeeder extends Seeder
         $this->command->info('  اسم الشركة: FIRST CLICK ERP');
         $this->command->info('  اسم المستخدم: '.self::OWNER_USERNAME);
         $this->command->info('  كلمة المرور: '.self::OWNER_PASSWORD);
-        $this->command->info('  صلاحيات: Super Admin + إدارة البرنامج + اشتراك حتى 2099');
+        $this->command->info('  صلاحيات: Super Admin + إدارة البرنامج + اشتراك حتى 2038');
     }
 }
