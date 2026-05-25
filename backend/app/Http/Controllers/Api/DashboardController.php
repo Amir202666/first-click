@@ -318,13 +318,18 @@ class DashboardController extends Controller
 
     private function buildPosPeakHours(int $tenantId, string $fromDate, string $toDate, ?int $branchId): array
     {
+        $driver = DB::getDriverName();
+        $hourExpr = $driver === 'sqlite'
+            ? 'CAST(strftime("%H", created_at) AS INTEGER)'
+            : 'HOUR(created_at)';
+
         $rows = Invoice::where('tenant_id', $tenantId)
             ->where('type', 'sales')
             ->whereNotIn('status', ['cancelled', 'draft'])
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereBetween('date', [$fromDate, $toDate])
-            ->select(DB::raw('CAST(strftime("%H", created_at) AS INTEGER) as hour'), DB::raw('COUNT(*) as count'), DB::raw('SUM(total) as total'))
-            ->groupBy(DB::raw('strftime("%H", created_at)'))
+            ->select(DB::raw("{$hourExpr} as hour"), DB::raw('COUNT(*) as count'), DB::raw('SUM(total) as total'))
+            ->groupBy(DB::raw($hourExpr))
             ->orderBy('hour')
             ->get();
         $byHour = [];
@@ -421,12 +426,17 @@ class DashboardController extends Controller
     private function buildPredictive(int $tenantId, ?int $branchId): array
     {
         $lastMonths = Carbon::now()->subMonths(4)->startOfMonth();
+        $driver = DB::getDriverName();
+        $ymExpr = $driver === 'sqlite'
+            ? 'strftime("%Y-%m", date)'
+            : "DATE_FORMAT(date, '%Y-%m')";
+
         $salesByMonth = Invoice::where('tenant_id', $tenantId)
             ->where('type', 'sales')
             ->whereNotIn('status', ['cancelled', 'draft'])
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->where('date', '>=', $lastMonths->toDateString())
-            ->select(DB::raw('strftime("%Y-%m", date) as ym'), DB::raw('SUM(total) as total'))
+            ->select(DB::raw("{$ymExpr} as ym"), DB::raw('SUM(total) as total'))
             ->groupBy('ym')
             ->orderBy('ym')
             ->pluck('total', 'ym')
