@@ -91,7 +91,7 @@ class SuperAdminSeeder extends Seeder
 
     private function seedDemoUsers($tenants): void
     {
-        User::updateOrCreate(
+        $demo = User::updateOrCreate(
             ['email' => 'demo@firstclickerp.com'],
             [
                 'name' => 'مدير النظام',
