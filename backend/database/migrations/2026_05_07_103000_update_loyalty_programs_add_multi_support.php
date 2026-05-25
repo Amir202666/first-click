@@ -10,7 +10,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('loyalty_programs', function (Blueprint $table) {
-            // Drop single-program-per-tenant constraint.
+            // Keep index on tenant_id for FKs before dropping unique constraint.
+            $table->index('tenant_id', 'lp_tenant_idx');
             $table->dropUnique(['tenant_id']);
 
             $table->string('code')->nullable()->after('name');
@@ -22,8 +23,8 @@ return new class extends Migration
             $table->json('applicable_customer_ids')->nullable()->after('apply_on_restaurant');
             $table->integer('sort_order')->default(0)->after('applicable_customer_ids');
 
-            $table->unique(['tenant_id', 'code']);
-            $table->index(['tenant_id', 'is_active']);
+            $table->unique(['tenant_id', 'code'], 'lp_tenant_code_uq');
+            $table->index(['tenant_id', 'is_active'], 'lp_tenant_active_idx');
         });
 
         // Backfill "code" for existing rows so the new unique (tenant_id, code) is satisfied.
@@ -54,8 +55,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('loyalty_programs', function (Blueprint $table) {
-            $table->dropIndex(['tenant_id', 'is_active']);
-            $table->dropUnique(['tenant_id', 'code']);
+            $table->dropIndex('lp_tenant_active_idx');
+            $table->dropUnique('lp_tenant_code_uq');
+            $table->dropIndex('lp_tenant_idx');
 
             $table->dropColumn([
                 'code',

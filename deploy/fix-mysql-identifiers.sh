@@ -92,6 +92,13 @@ if [ -f "$PAYABLE" ]; then
   sed -i "s/dropForeign(\['installments_payable_account_id'\])/dropForeign('tad_inst_pay_fk')/" "$PAYABLE"
 fi
 
+LOYALTY="$MIG_DIR/2026_05_07_103000_update_loyalty_programs_add_multi_support.php"
+if [ -f "$LOYALTY" ] && ! grep -q 'lp_tenant_idx' "$LOYALTY"; then
+  sed -i "/dropUnique(\['tenant_id'\]);/i\\            \$table->index('tenant_id', 'lp_tenant_idx');" "$LOYALTY"
+  sed -i "s/\$table->unique(\['tenant_id', 'code'\]);/\$table->unique(['tenant_id', 'code'], 'lp_tenant_code_uq');/" "$LOYALTY"
+  sed -i "s/\$table->index(\['tenant_id', 'is_active'\]);/\$table->index(['tenant_id', 'is_active'], 'lp_tenant_active_idx');/" "$LOYALTY"
+fi
+
 echo "🗄️ Running migrations..."
 export COMPOSER_ALLOW_SUPERUSER=1
 php artisan migrate --force
