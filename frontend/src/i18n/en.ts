@@ -59,7 +59,8 @@ const en: Translations = {
   login: 'Login',
   loginCompanyName: 'Company ID',
   loginUsername: 'Username',
-  loginDemoHint: 'Owner: Company ID = firstclick-erp, Username = firstclick-erp, Password = FirstClickERP',
+  loginDemoHint:
+    'first-company: admin@firstclick.com / password123 — Super Admin (after admin:create): admin@firstclickerp.com / FirstClick@2026 — Owner: firstclick-erp / firstclick-erp / FirstClickERP',
   logout: 'Logout',
   email: 'Email',
   password: 'Password',

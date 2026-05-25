@@ -13,9 +13,9 @@ use Illuminate\Database\Seeder;
  */
 class TenantAccountDefaultsSeeder extends Seeder
 {
-    public function run(): void
+    public function run(?int $tenantId = null): void
     {
-        $tenantId = 1;
+        $tenantId = $tenantId ?? 1;
         if (! Tenant::find($tenantId)) {
             $this->command?->warn("Tenant {$tenantId} not found. Skipping.");
 

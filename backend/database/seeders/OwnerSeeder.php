@@ -9,7 +9,6 @@ use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 /**
  * حساب مالك النظام — Super Admin + شركة رئيسية + اشتراك دائم.
@@ -32,12 +31,14 @@ class OwnerSeeder extends Seeder
             [
                 'name' => 'مالك النظام',
                 'username' => self::OWNER_USERNAME,
-                'password' => Hash::make(self::OWNER_PASSWORD),
                 'is_super_admin' => true,
             ]
         );
 
-        $user->forceFill(['is_super_admin' => true])->save();
+        $user->forceFill([
+            'password' => self::OWNER_PASSWORD,
+            'is_super_admin' => true,
+        ])->save();
 
         $tenant = Tenant::updateOrCreate(
             ['slug' => self::OWNER_SLUG],

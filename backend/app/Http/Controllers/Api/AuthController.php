@@ -54,8 +54,11 @@ class AuthController extends Controller
             ]);
         }
 
-        $user = User::where('username', $usernameInput)
-            ->orWhere('email', $usernameInput)
+        $user = User::query()
+            ->where(function ($q) use ($usernameInput) {
+                $q->where('username', $usernameInput)
+                    ->orWhere('email', $usernameInput);
+            })
             ->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
