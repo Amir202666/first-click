@@ -33,9 +33,8 @@ class AccountController extends Controller
             ->orderBy('code')
             ->get();
 
-        $currentUserId = $request->user()?->id;
-        if ($currentUserId) {
-            $visibleIds = $this->visibleAccountIdsForUser($accounts, $currentUserId);
+        if ($request->user() && ! $request->user()->isSuperAdmin()) {
+            $visibleIds = $this->visibleAccountIdsForUser($accounts, $request->user()->id);
             $accounts = $accounts->filter(fn ($a) => $visibleIds->contains($a->id))->values();
         }
 
@@ -48,12 +47,11 @@ class AccountController extends Controller
         $accounts = Account::where('tenant_id', $tenantId)
             ->with(['branches', 'costCenters', 'allowedUsers'])
             ->when($request->boolean('active_only'), fn ($q) => $q->where('is_active', true))
-            ->orderByRaw('CAST(code AS INTEGER)')
+            ->orderBy('code')
             ->get();
 
-        $currentUserId = $request->user()?->id;
-        if ($currentUserId) {
-            $visibleIds = $this->visibleAccountIdsForUser($accounts, $currentUserId);
+        if ($request->user() && ! $request->user()->isSuperAdmin()) {
+            $visibleIds = $this->visibleAccountIdsForUser($accounts, $request->user()->id);
             $accounts = $accounts->filter(fn ($a) => $visibleIds->contains($a->id));
         }
 

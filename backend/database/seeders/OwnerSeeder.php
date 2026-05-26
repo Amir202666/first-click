@@ -60,7 +60,8 @@ class OwnerSeeder extends Seeder
         ]);
 
         if (! Account::where('tenant_id', $tenant->id)->exists()) {
-            (new ChartOfAccountsSeeder)->run($tenant->id);
+            (new DefaultChartOfAccountsSeeder)->run($tenant->id);
+            app(\App\Services\AccountService::class)->backfillPaths($tenant->id);
         }
 
         $plan = SubscriptionPlan::where('slug', 'advanced')->first()

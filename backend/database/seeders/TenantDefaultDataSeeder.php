@@ -32,7 +32,7 @@ class TenantDefaultDataSeeder extends Seeder
 
             $hasAccounts = Account::where('tenant_id', $tenant->id)->exists();
             if (! $hasAccounts || $forceChart) {
-                (new DefaultChartOfAccountsSeeder)->run($tenant->id);
+                (new DefaultChartOfAccountsSeeder)->run($tenant->id, $forceChart);
                 $this->command?->line('  ✓ دليل الحسابات الافتراضي');
             } else {
                 $this->command?->line('  ○ دليل الحسابات موجود — لم يُستبدل');
