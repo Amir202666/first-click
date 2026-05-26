@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\JournalEntryLine;
 use App\Services\AccountingService;
+use App\Services\AccountService;
 use App\Services\ChartOfAccountsWizardImportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AccountController extends Controller
 {
+    public function __construct(private AccountService $accountService) {}
+
     public function index(Request $request): JsonResponse
     {
         $accounts = Account::where('tenant_id', $request->tenant_id)
@@ -61,42 +64,37 @@ class AccountController extends Controller
 
     public function nextCode(Request $request): JsonResponse
     {
+        $tenantId = (int) $request->tenant_id;
         $parentId = $request->query('parent_id');
-        $tenantId = $request->tenant_id;
+        $parent = $parentId
+            ? Account::where('tenant_id', $tenantId)->findOrFail($parentId)
+            : null;
 
-        if ($parentId) {
-            $parent = Account::where('tenant_id', $tenantId)->findOrFail($parentId);
-            $parentCode = $parent->code;
-            $childCodeLen = strlen($parentCode) + 1;
+        return response()->json([
+            'code' => $this->accountService->generateCode($tenantId, $parent),
+        ]);
+    }
 
-            $lastChild = Account::where('tenant_id', $tenantId)
-                ->where('parent_id', $parentId)
-                ->orderByRaw('CAST(code AS INTEGER) DESC')
-                ->first();
+    public function search(Request $request): JsonResponse
+    {
+        $tenantId = (int) $request->tenant_id;
+        $results = $this->accountService->search($tenantId, (string) ($request->query('q') ?? ''), 50);
 
-            if ($lastChild) {
-                $suffix = (int) substr($lastChild->code, strlen($parentCode));
-                $nextCode = $parentCode.($suffix + 1);
-            } else {
-                $nextCode = $parentCode.'1';
-            }
-        } else {
-            $lastRoot = Account::where('tenant_id', $tenantId)
-                ->whereNull('parent_id')
-                ->orderByRaw('CAST(code AS INTEGER) DESC')
-                ->first();
+        return response()->json($results->map(fn ($a) => $this->accountWithMappings($a)));
+    }
 
-            $nextCode = $lastRoot ? (string) ((int) $lastRoot->code + 1) : '1';
-        }
+    public function flat(Request $request): JsonResponse
+    {
+        $request->merge(['active_only' => $request->query('active_only', true)]);
 
-        return response()->json(['code' => $nextCode]);
+        return $this->index($request);
     }
 
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'parent_id' => 'nullable|exists:accounts,id',
-            'code' => 'required|string|max:20',
+            'code' => 'nullable|string|max:50',
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
             'type' => 'required|in:asset,liability,equity,revenue,cogs,expense',
@@ -113,29 +111,26 @@ class AccountController extends Controller
             'user_ids.*' => ['integer', Rule::exists('tenant_users', 'user_id')->where('tenant_id', $request->tenant_id)],
         ]);
 
-        $validated['tenant_id'] = $request->tenant_id;
-        $validated['level'] = 1;
-        $validated['is_postable'] = array_key_exists('is_postable', $validated) ? $validated['is_postable'] : true;
-        $validated['is_active'] = array_key_exists('is_active', $validated) ? $validated['is_active'] : true;
-
         $branchIds = $validated['branch_ids'] ?? [];
         $costCenterIds = $validated['cost_center_ids'] ?? [];
         $userIds = $validated['user_ids'] ?? [];
         unset($validated['branch_ids'], $validated['cost_center_ids'], $validated['user_ids']);
 
-        if ($validated['parent_id']) {
-            $parent = Account::where('tenant_id', $request->tenant_id)->findOrFail($validated['parent_id']);
-            $validated['level'] = $parent->level + 1;
-        }
+        $isGroup = array_key_exists('is_group', $request->all())
+            ? $request->boolean('is_group')
+            : ! ($validated['is_postable'] ?? true);
 
-        $account = Account::create($validated);
+        try {
+            $account = $this->accountService->create((int) $request->tenant_id, [
+                ...$validated,
+                'is_group' => $isGroup,
+                'is_postable' => $validated['is_postable'] ?? ! $isGroup,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         $this->syncAccountMappings($account, $branchIds, $costCenterIds, $userIds);
-
-        // عند إضافة حساب فرعي، الحساب الأب يصبح غير قابل للترحيل (رأس فقط)
-        if ($account->parent_id) {
-            Account::where('id', $account->parent_id)->update(['is_postable' => false]);
-        }
 
         return response()->json($this->accountWithMappings($account->fresh()), 201);
     }
@@ -190,6 +185,30 @@ class AccountController extends Controller
         }
 
         return response()->json($this->accountWithMappings($account->fresh()));
+    }
+
+    public function move(Request $request, int $id): JsonResponse
+    {
+        $request->validate(['new_parent_id' => 'required|integer']);
+
+        $tenantId = (int) $request->tenant_id;
+        $account = Account::where('tenant_id', $tenantId)->findOrFail($id);
+        $newParent = Account::where('tenant_id', $tenantId)->findOrFail($request->new_parent_id);
+
+        try {
+            $moved = $this->accountService->moveAccount($account, $newParent);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json($this->accountWithMappings($moved));
+    }
+
+    public function reCode(Request $request): JsonResponse
+    {
+        $this->accountService->reCodeAll((int) $request->tenant_id);
+
+        return response()->json(['message' => 'تم إعادة الترميز بنجاح']);
     }
 
     public function destroy(Request $request, int $id): JsonResponse

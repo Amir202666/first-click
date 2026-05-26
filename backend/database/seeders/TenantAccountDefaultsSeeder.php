@@ -25,17 +25,17 @@ class TenantAccountDefaultsSeeder extends Seeder
         $byCode = Account::where('tenant_id', $tenantId)->get()->keyBy('code');
 
         $defaults = TenantAccountDefault::firstOrNew(['tenant_id' => $tenantId]);
-        $defaults->cash_account_id = $byCode->get('1111')?->id;
-        $defaults->bank_account_id = $byCode->get('1112')?->id;
-        $defaults->customers_account_id = $byCode->get('112')?->id;
-        $defaults->vendors_account_id = $byCode->get('211')?->id;
-        $defaults->inventory_account_id = $byCode->get('113')?->id;
-        $defaults->sales_account_id = $byCode->get('41')?->id;
-        $defaults->sales_returns_account_id = $byCode->get('41')?->id;
-        $defaults->cogs_account_id = $byCode->get('61')?->id;
-        $defaults->purchases_account_id = $byCode->get('62')?->id;
-        $defaults->discounts_account_id = $byCode->get('64')?->id;
-        $defaults->tax_payable_account_id = $byCode->get('213')?->id;
+        $defaults->cash_account_id = $byCode->get('1111')?->id ?? $byCode->get('111')?->id;
+        $defaults->bank_account_id = $byCode->get('1113')?->id ?? $byCode->get('1112')?->id;
+        $defaults->customers_account_id = $byCode->get('1121')?->id ?? $byCode->get('112')?->id;
+        $defaults->vendors_account_id = $byCode->get('2111')?->id ?? $byCode->get('211')?->id;
+        $defaults->inventory_account_id = $byCode->get('1131')?->id ?? $byCode->get('113')?->id;
+        $defaults->sales_account_id = $byCode->get('411')?->id ?? $byCode->get('41')?->id;
+        $defaults->sales_returns_account_id = $byCode->get('412')?->id ?? $byCode->get('41')?->id;
+        $defaults->cogs_account_id = $byCode->get('511')?->id ?? $byCode->get('61')?->id;
+        $defaults->purchases_account_id = $byCode->get('513')?->id ?? $byCode->get('62')?->id;
+        $defaults->discounts_account_id = $byCode->get('413')?->id ?? $byCode->get('64')?->id;
+        $defaults->tax_payable_account_id = $byCode->get('212')?->id ?? $byCode->get('213')?->id;
         $defaults->capital_account_id = $byCode->get('31')?->id;
         $defaults->save();
 

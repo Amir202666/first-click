@@ -183,14 +183,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Chart of Accounts
         Route::get('/accounts', [AccountController::class, 'index']);
+        Route::get('/accounts/flat', [AccountController::class, 'flat']);
+        Route::get('/accounts/search', [AccountController::class, 'search']);
         Route::get('/accounts/tree', [AccountController::class, 'tree']);
         Route::get('/accounts/next-code', [AccountController::class, 'nextCode']);
+        Route::post('/accounts/re-code', [AccountController::class, 'reCode'])->middleware('permission:accounts.edit');
         Route::get('/accounts/export', [AccountController::class, 'export']);
         Route::post('/accounts/import', [AccountController::class, 'import']);
         Route::post('/accounts/import-wizard', [AccountController::class, 'importWizard']);
         Route::post('/accounts', [AccountController::class, 'store']);
         Route::get('/accounts/{id}', [AccountController::class, 'show']);
         Route::put('/accounts/{id}', [AccountController::class, 'update']);
+        Route::post('/accounts/{id}/move', [AccountController::class, 'move'])->middleware('permission:accounts.edit');
         Route::delete('/accounts/{id}', [AccountController::class, 'destroy'])->middleware('permission:accounts.delete');
 
         // Journal Entries
