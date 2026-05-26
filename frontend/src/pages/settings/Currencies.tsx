@@ -62,7 +62,13 @@ export default function Currencies() {
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['currencies'] })
       setLastFetchTime(new Date().toISOString())
-      showToast(res.message, res.failed?.length ? 'error' : 'success')
+      const type =
+        res.updated > 0 && (res.failed?.length ?? 0) > 0
+          ? 'success'
+          : (res.failed?.length ?? 0) > 0
+            ? 'error'
+            : 'success'
+      showToast(res.message, type)
     },
     onError: (err: any) => showToast(err?.response?.data?.message ?? t.msg?.addError ?? 'Error', 'error'),
   })
