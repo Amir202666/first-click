@@ -59,6 +59,9 @@ composer install --no-dev --optimize-autoloader --no-interaction
 echo "🗄️  migrations..."
 php artisan migrate --force
 
+echo "👤 ربط Super Admin بالشركات..."
+php artisan admin:create 2>/dev/null || true
+
 # ── 4. Frontend build → backend/public (يحفظ index.php) ──
 echo "🎨 بناء الواجهة..."
 cd "$FRONTEND_DIR"

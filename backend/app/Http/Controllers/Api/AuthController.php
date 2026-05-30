@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AuditLogService;
@@ -79,9 +80,7 @@ class AuthController extends Controller
                 ]);
             }
         } elseif (! $user->tenants()->where('tenants.id', $tenant->id)->exists()) {
-            throw ValidationException::withMessages([
-                'company' => ['حساب المالك غير مربوط بهذه الشركة. شغّل: php artisan db:seed --class=OwnerSeeder'],
-            ]);
+            $this->linkSuperAdminToTenant($user, $tenant);
         }
 
         $this->auditLog->logLogin($user->id, true, $tenant->id);
@@ -289,6 +288,18 @@ class AuthController extends Controller
             ],
             default => [],
         };
+    }
+
+    private function linkSuperAdminToTenant(User $user, Tenant $tenant): void
+    {
+        $adminRole = Role::where('tenant_id', $tenant->id)->where('slug', 'admin')->first();
+        $tenant->users()->syncWithoutDetaching([
+            $user->id => [
+                'role' => 'admin',
+                'role_id' => $adminRole?->id,
+                'is_active' => true,
+            ],
+        ]);
     }
 
     private function registerLoginFailure(
