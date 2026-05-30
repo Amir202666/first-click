@@ -60,7 +60,7 @@ const en: Translations = {
   loginCompanyName: 'Company ID',
   loginUsername: 'Username',
   loginDemoHint:
-    'first-company: admin@firstclick.com / password123 — Super Admin (after admin:create): admin@firstclickerp.com / FirstClick@2026 — Owner: firstclick-erp / firstclick-erp / FirstClickERP',
+    'firstclick-erp | user: firstclick-erp | password: FirstClickERP — or Super Admin: admin@firstclickerp.com / FirstClick@2026',
   logout: 'Logout',
   email: 'Email',
   password: 'Password',
