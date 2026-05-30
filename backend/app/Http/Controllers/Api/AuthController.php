@@ -36,7 +36,7 @@ class AuthController extends Controller
         $lockKey = $baseKey.':locked';
         $attemptKey = $baseKey.':attempts';
 
-        if (Cache::has($lockKey)) {
+        if ($this->safeCacheHas($lockKey)) {
             $this->auditLog->log('login_locked', 'sessions', null, null, ['company' => $companyInput, 'username' => $usernameInput], null, null);
             throw ValidationException::withMessages([
                 'username' => ['تم قفل تسجيل الدخول مؤقتاً بسبب محاولات متكررة. حاول لاحقاً.'],
@@ -85,8 +85,8 @@ class AuthController extends Controller
         }
 
         $this->auditLog->logLogin($user->id, true, $tenant->id);
-        Cache::forget($attemptKey);
-        Cache::forget($lockKey);
+        $this->safeCacheForget($attemptKey);
+        $this->safeCacheForget($lockKey);
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
@@ -298,12 +298,48 @@ class AuthController extends Controller
         int $windowSeconds,
         int $lockSeconds
     ): void {
-        $attempts = (int) Cache::get($attemptKey, 0);
+        $attempts = (int) $this->safeCacheGet($attemptKey, 0);
         $attempts++;
-        Cache::put($attemptKey, $attempts, now()->addSeconds(max(1, $windowSeconds)));
+        $this->safeCachePut($attemptKey, $attempts, now()->addSeconds(max(1, $windowSeconds)));
 
         if ($attempts >= max(1, $maxAttempts)) {
-            Cache::put($lockKey, true, now()->addSeconds(max(1, $lockSeconds)));
+            $this->safeCachePut($lockKey, true, now()->addSeconds(max(1, $lockSeconds)));
+        }
+    }
+
+    private function safeCacheHas(string $key): bool
+    {
+        try {
+            return Cache::has($key);
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function safeCacheGet(string $key, mixed $default = null): mixed
+    {
+        try {
+            return Cache::get($key, $default);
+        } catch (\Throwable) {
+            return $default;
+        }
+    }
+
+    private function safeCachePut(string $key, mixed $value, \DateTimeInterface|\DateInterval|int|null $ttl = null): void
+    {
+        try {
+            Cache::put($key, $value, $ttl);
+        } catch (\Throwable) {
+            // Redis/Cache غير متاح — لا نمنع تسجيل الدخول
+        }
+    }
+
+    private function safeCacheForget(string $key): void
+    {
+        try {
+            Cache::forget($key);
+        } catch (\Throwable) {
+            //
         }
     }
 }

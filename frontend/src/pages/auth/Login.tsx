@@ -53,12 +53,30 @@ export default function Login() {
       await login(company, username, password)
       navigate('/')
     } catch (err: unknown) {
-      const res = (err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } })?.response?.data
-      const msg =
+      const axiosErr = err as {
+        response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } }
+        message?: string
+      }
+      const res = axiosErr.response?.data
+      const status = axiosErr.response?.status
+      let msg =
         res?.errors?.company?.[0] ??
         res?.errors?.username?.[0] ??
         res?.message ??
         t.loginFailed
+      if (status === 429) {
+        msg = lang === 'ar'
+          ? 'محاولات كثيرة — انتظر دقيقة ثم حاول مرة أخرى'
+          : 'Too many attempts — wait a minute and try again'
+      } else if (status && status >= 500) {
+        msg = lang === 'ar'
+          ? 'خطأ في الخادم — راجع إعداد Redis أو سجلات Laravel'
+          : 'Server error — check Redis or Laravel logs'
+      } else if (!axiosErr.response) {
+        msg = lang === 'ar'
+          ? 'فشل الاتصال بالخادم — تأكد أن الموقع يعمل'
+          : 'Cannot reach server — check site is online'
+      }
       setError(msg)
     } finally {
       setLoading(false)
